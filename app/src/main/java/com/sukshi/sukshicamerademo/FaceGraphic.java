@@ -20,11 +20,19 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
+import android.util.Log;
 
 import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.Landmark;
+
+import java.util.List;
+
+import static com.sukshi.sukshicamerademo.FaceDect.onFaceLandMarkDestectedListener;
 
 /**
  * Graphic instance for rendering face position, orientation, and landmarks within an associated
@@ -43,7 +51,7 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
     float eyeRightOpenProbability = -1;
     float eyeLeftOpenProbability = -1;
 
-    public   static Paint mHintOutlinePaint;
+    public static Paint mHintOutlinePaint;
 
     public Paint mHintTextPaint;
 
@@ -61,6 +69,7 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         resources = context.getResources();
         marker = BitmapFactory.decodeResource(resources, R.drawable.marker, opt);
         initializePaints(resources);
+
     }
 
     public void setId(int id) {
@@ -76,14 +85,15 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         postInvalidate();
     }
 
-    private void initializePaints(Resources resources) { }
+    private void initializePaints(Resources resources) {
+        mHintTextPaint = new Paint();
+        mHintTextPaint.setTextAlign(Paint.Align.CENTER);
+        mHintTextPaint.setTextSize(48);
+    }
 
     public void goneFace() {
         mFace = null;
     }
-
-    float left = 0, right = 0, top = 0, bottom = 0;
-
 
     @Override
     public void draw(Canvas canvas) {
@@ -106,11 +116,44 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         // Draw a box around the face.
         float left = centerX - offsetX * 0.75f;
         float right = centerX + offsetX * 0.75f;
-        float top = centerY - offsetY * 0.75f;
-        float bottom = centerY + offsetY * 0.75f;
+        float top = centerY - offsetY*1.5f ;
+        float bottom = centerY + offsetY * 1f;
 
-//        if (mHintOutlinePaint != null){
-//            canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
-//        }
+         int hintArea = ((canvas.getWidth()-200) - 200) * ((canvas.getHeight()-200) - 200);
+
+        faceIsInTheBox = !(left < 200) && !(right > canvas.getWidth()-200)
+                && !(top < 200) && !(bottom > canvas.getHeight()-200);
+
+        faceArea = (right - left) * (bottom - top);
+
+        faceRatioOk = faceArea > hintArea / 3;
+
+        String error = "";
+        if (isFaceStraight(face.getEulerY(),face.getEulerZ()) && faceIsInTheBox && faceRatioOk) {
+            mHintTextPaint.setColor(Color.GREEN);
+            error = "Straight face found.";
+            onFaceLandMarkDestectedListener.onFaceLandMarkDetected(true);
+        } else {
+            mHintTextPaint.setColor(Color.RED);
+            if(!faceIsInTheBox){
+                error = "Face is outside the green frame.";
+            }else if(!faceRatioOk){
+                error = "Face ratio is small. Bring phone close to face";
+            }else if(!isFaceStraight(face.getEulerY(),face.getEulerZ())){
+                error = "Face is not straight.";
+            }
+            onFaceLandMarkDestectedListener.onFaceLandMarkDetected(false);
+        }
+
+        if(!error.isEmpty() && mHintTextPaint != null){
+            canvas.drawText(error, canvas.getWidth()/2, canvas.getHeight() - 100, mHintTextPaint);
+        }
+    }
+
+    /**
+     * For face to be straight Y axis and Z axis eular angle should lie between -12 to 12.
+    * */
+    private boolean isFaceStraight(float eularY, float eularZ){
+        return eularY > -12 && eularY < 12 && eularZ > -12 && eularZ < 12;
     }
 }

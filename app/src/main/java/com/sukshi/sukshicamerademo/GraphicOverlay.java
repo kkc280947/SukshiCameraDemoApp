@@ -17,6 +17,8 @@ package com.sukshi.sukshicamerademo;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -24,6 +26,8 @@ import com.google.android.gms.vision.CameraSource;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.sukshi.sukshicamerademo.FaceGraphic.mHintOutlinePaint;
 
 public class GraphicOverlay extends View {
     private final Object mLock = new Object();
@@ -81,10 +85,19 @@ public class GraphicOverlay extends View {
 
     public GraphicOverlay(Context context) {
         super(context);
+        init();
+    }
+
+    private void init() {
+        mHintOutlinePaint = new Paint();
+        mHintOutlinePaint.setColor( Color.GREEN );
+        mHintOutlinePaint.setStyle( Paint.Style.STROKE );
+        mHintOutlinePaint.setStrokeWidth(5);
     }
 
     public GraphicOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     /**
@@ -136,7 +149,8 @@ public class GraphicOverlay extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
+        float left = 200, right = canvas.getWidth() - 200 , top = 200, bottom = canvas.getHeight() - 200;
+        canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
         synchronized (mLock) {
             if ((mPreviewWidth != 0) && (mPreviewHeight != 0)) {
                 mWidthScaleFactor = (float) canvas.getWidth() / (float) mPreviewWidth;

@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -42,12 +43,12 @@ import java.io.IOException;
 import static com.sukshi.sukshicamerademo.FaceDect.previewFaceDetector;
 
 
-public class CameraActivity extends AppCompatActivity implements FaceDect.OnMultipleFacesDetectedListener, FaceDect.OnCaptureListener {
+public class CameraActivity extends AppCompatActivity implements FaceDect.OnMultipleFacesDetectedListener, FaceDect.OnCaptureListener, FaceDect.OnFaceLandMarkDestectedListener {
 
     private static final String TAG = "Custom Camera";
     private Context context;
     public CameraSource mCameraSource;
-
+    ImageView camera;
     // CAMERA VERSION ONE DECLARATIONS
     FaceDect faceDect;
 
@@ -69,7 +70,7 @@ public class CameraActivity extends AppCompatActivity implements FaceDect.OnMult
         context = getApplicationContext();
         takePicture = false;
 
-        ImageView camera = findViewById(R.id.camera);
+        camera = findViewById(R.id.camera);
 
         previewImages = findViewById(R.id.preview);
         RelativeLayout relativeLayout = findViewById(R.id.camRLayout);
@@ -200,5 +201,19 @@ public class CameraActivity extends AppCompatActivity implements FaceDect.OnMult
         File file = new File(mediaStorageDir.getPath() + File.separator +  time + ".jpg");
 
         return file;
+    }
+
+    @Override
+    public void onFaceLandMarkDetected(final boolean b) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(b){
+                    camera.setVisibility(View.VISIBLE);
+                }else {
+                    camera.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
     }
 }
